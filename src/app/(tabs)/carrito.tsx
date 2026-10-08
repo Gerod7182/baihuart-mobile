@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   Pressable,
@@ -32,9 +33,9 @@ export default function CarritoScreen() {
       console.error('No se pudo cargar el carrito:', error);
     }
   }, []);
-  useFocusEffect(
+   useFocusEffect(
     useCallback(() => {
-      cargarCarrito();
+      void cargarCarrito();
     }, [cargarCarrito])
   );
 
@@ -43,14 +44,14 @@ export default function CarritoScreen() {
     0
   );
 
-  const eliminarItem = async (id: string) => {
+    const eliminarItem = async (id: string) => {
     await cartService.eliminarItem(id);
-    cargarCarrito();
+    await cargarCarrito();
   };
 
   const cambiarCantidad = async (id: string, cantidadActual: number, delta: number) => {
     await cartService.actualizarCantidad(id, cantidadActual + delta);
-    cargarCarrito();
+    await cargarCarrito();
   };
 
   const finalizarCompra = async () => {
@@ -82,13 +83,15 @@ export default function CarritoScreen() {
       items,
     };
 
-    try {
+       try {
       await pedidoService.crearPedido(pedido);
       await cartService.vaciarCarrito();
       setCarrito([]);
-      router.push('/(tabs)');
-      // TODO: mostrar una confirmación real de "gracias por tu compra"
-      // en vez de solo volver a Home — equivalente a /gracias en la web.
+      Alert.alert(
+        '¡Gracias por tu compra!',
+        'Tu pedido fue registrado correctamente.',
+        [{ text: 'Volver al inicio', onPress: () => router.replace('/(tabs)') }]
+      );
     } catch (error) {
       console.error('Error al finalizar la compra:', error);
       setMensajeError('No se pudo procesar tu compra. Intenta de nuevo.');
