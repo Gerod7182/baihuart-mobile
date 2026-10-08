@@ -1,25 +1,20 @@
-// Equivalente a src/app/pages/galeria/galeria.component.ts + .html en baihuart-app.
-// El modal de imagen ampliada ahora usa react-native-image-viewing, que
-// replica el visor de Instagram/Google Photos: pinch-to-zoom, doble tap
-// para zoom, y deslizar hacia abajo para cerrar.
-// Instalar: npx expo install react-native-image-viewing
 
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
   FlatList,
   Image,
   Pressable,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import ImageView from 'react-native-image-viewing';
+import { HeroBanner } from '../../components/HeroBanner';
 import { useGaleria } from '../../services/galeriaService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useTranslations } from '../../services/translations';
 import { colors } from '../../theme/colors';
-import { HeroBanner } from '../../components/HeroBanner';
 
 const FILTROS = [
   { key: 'todos', label: 'Todos' },
@@ -27,6 +22,22 @@ const FILTROS = [
   { key: 'anime', label: 'Anime' },
   { key: 'pop', label: 'Pop' },
 ] as const;
+
+type ItemPie = { titulo?: string; descripcion?: string };
+
+const ItemsPieContext = createContext<ItemPie[]>([]);
+
+function PiePagina({ imageIndex }: Readonly<{ imageIndex: number }>) {
+  const items = useContext(ItemsPieContext);
+  const item = items[imageIndex];
+  if (!item) return null;
+  return (
+    <View style={styles.piePagina}>
+      <Text style={styles.tituloModal}>{item.titulo}</Text>
+      <Text style={styles.descModal}>{item.descripcion}</Text>
+    </View>
+  );
+}
 
 export default function GaleriaScreen() {
   const { items, cargando } = useGaleria();
@@ -132,24 +143,17 @@ export default function GaleriaScreen() {
         />
       )}
 
-      <ImageView
-        images={imagenesParaVisor}
-        imageIndex={indiceAbierto ?? 0}
-        visible={indiceAbierto !== null}
-        onRequestClose={() => setIndiceAbierto(null)}
-        swipeToCloseEnabled
-        doubleTapToZoomEnabled
-        FooterComponent={({ imageIndex }) => {
-          const item = itemsFiltrados[imageIndex];
-          if (!item) return null;
-          return (
-            <View style={styles.piePagina}>
-              <Text style={styles.tituloModal}>{item.titulo}</Text>
-              <Text style={styles.descModal}>{item.descripcion}</Text>
-            </View>
-          );
-        }}
-      />
+      <ItemsPieContext.Provider value={itemsFiltrados}>
+        <ImageView
+          images={imagenesParaVisor}
+          imageIndex={indiceAbierto ?? 0}
+          visible={indiceAbierto !== null}
+          onRequestClose={() => setIndiceAbierto(null)}
+          swipeToCloseEnabled
+          doubleTapToZoomEnabled
+          FooterComponent={PiePagina}
+        />
+      </ItemsPieContext.Provider>
     </View>
   );
 }
