@@ -27,11 +27,11 @@ function SeccionProductos({
   titulo,
   categoria,
   onAbrirProducto,
-}: {
+}: Readonly<{
   titulo: string;
   categoria: string;
   onAbrirProducto: (producto: Product) => void;
-}) {
+}>) {
   const { productos, cargando } = useProductosPorCategoria(categoria);
 
   if (cargando) {
