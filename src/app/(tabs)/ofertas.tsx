@@ -34,8 +34,12 @@ function useOfertas() {
 export default function OfertasScreen() {
   const { ofertas, cargando } = useOfertas();
 
-  const agregarAlCarrito = (oferta: OfertaConId) => {
-    cartService.agregarItem(oferta.id, oferta.img, oferta.precioAhora, oferta.nombre);
+   const agregarAlCarrito = async (oferta: OfertaConId) => {
+    try {
+      await cartService.agregarItem(oferta.id, oferta.img, oferta.precioAhora, oferta.nombre);
+    } catch (error) {
+      console.error('Error al agregar la oferta al carrito:', error);
+    }
   };
 
   return (

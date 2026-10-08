@@ -1,25 +1,21 @@
-// Equivalente a src/app/pages/carrito/carrito.component.ts + .html
-// El checkout real (guardar el pedido en Firestore) está aquí; el
-// motor de cupones + transacción atómica de stock queda pendiente
-// para una siguiente pasada, con más cuidado.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
+  ActivityIndicator,
   FlatList,
   Image,
-  StyleSheet,
   Pressable,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { cartService } from '../../services/cartService';
-import { pedidoService } from '../../services/pedidoService';
-import { useUsuarioActual } from '../../services/authService';
-import { resolverImagenLocal } from '../../services/imageMap';
-import { colors } from '../../theme/colors';
 import { ItemPedido, Pedido, Product } from '../../models/types';
+import { useUsuarioActual } from '../../services/authService';
+import { cartService } from '../../services/cartService';
+import { resolverImagenLocal } from '../../services/imageMap';
+import { pedidoService } from '../../services/pedidoService';
+import { colors } from '../../theme/colors';
 
 export default function CarritoScreen() {
   const [carrito, setCarrito] = useState<Product[]>([]);
@@ -28,14 +24,14 @@ export default function CarritoScreen() {
   const { usuario } = useUsuarioActual();
   const router = useRouter();
 
-  const cargarCarrito = useCallback(async () => {
-    const items = await cartService.obtenerItems();
-    setCarrito(items);
+    const cargarCarrito = useCallback(async () => {
+    try {
+      const items = await cartService.obtenerItems();
+      setCarrito(items);
+    } catch (error) {
+      console.error('No se pudo cargar el carrito:', error);
+    }
   }, []);
-
-  // Recarga el carrito cada vez que esta pantalla vuelve a estar en foco
-  // (ej. después de agregar algo en Home y volver aquí) — es el
-  // equivalente a que Angular relea localStorage en cada ngOnInit.
   useFocusEffect(
     useCallback(() => {
       cargarCarrito();

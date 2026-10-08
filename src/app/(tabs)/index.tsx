@@ -106,17 +106,18 @@ export default function HomeScreen() {
     setTimeout(() => setToastVisible(false), 1800);
   };
 
-  const confirmarAgregar = () => {
+    const confirmarAgregar = async () => {
     if (!productoSeleccionado) return;
-    cartService.agregarItem(
-      productoSeleccionado.id,
-      productoSeleccionado.img,
-      productoSeleccionado.precio,
-      productoSeleccionado.nombre || '',
-      cantidad
-    );
-    mostrarToast(`"${productoSeleccionado.nombre}" agregado al carrito 🔥`);
-    cerrarProducto();
+    const { id, img, precio, nombre } = productoSeleccionado;
+    try {
+      await cartService.agregarItem(id, img, precio, nombre || '', cantidad);
+      mostrarToast(`"${nombre}" agregado al carrito 🔥`);
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      mostrarToast('No se pudo agregar el producto. Intenta de nuevo.');
+    } finally {
+      cerrarProducto();
+    }
   };
 
   const fuenteModal = obtenerFuenteImagen(productoSeleccionado?.img);
