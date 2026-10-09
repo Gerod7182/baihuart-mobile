@@ -1,11 +1,7 @@
-// Equivalente a .hero-home / .hero-galeria / .hero-ofertas en la web:
-// imagen de fondo + degradado oscuro encima + título centrado.
-// Reutilizable en Tienda, Galería y Ofertas, cada una con su propia
-// imagen (mismas que usa la web).
 
-import { ImageBackground, View, Text, StyleSheet } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { resolverImagenLocal } from '../services/imageMap';
-import { colors } from '../theme/colors';
+import { colors, fonts } from '../theme/colors';
 
 type Props = {
   nombreImagen: string; // ej. 'samuraiplex.png' — debe existir en imageMap
@@ -14,7 +10,7 @@ type Props = {
   altura?: number;
 };
 
-export function HeroBanner({ nombreImagen, titulo, subtitulo, altura = 200 }: Props) {
+export function HeroBanner({ nombreImagen, titulo, subtitulo, altura = 200 }: Readonly<Props>) {
   const fuente = resolverImagenLocal(nombreImagen);
 
   return (
@@ -34,7 +30,11 @@ export function HeroBanner({ nombreImagen, titulo, subtitulo, altura = 200 }: Pr
 const styles = StyleSheet.create({
   contenedor: { width: '100%', justifyContent: 'center', alignItems: 'center' },
   superposicion: {
-    ...StyleSheet.absoluteFillObject,
+        position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -42,8 +42,8 @@ const styles = StyleSheet.create({
   },
   titulo: {
     color: colors.blanco,
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontFamily: fonts.brand,
+    fontSize: 22,
     textTransform: 'uppercase',
     letterSpacing: 2,
     textAlign: 'center',
@@ -51,5 +51,15 @@ const styles = StyleSheet.create({
     textShadowRadius: 14,
     textShadowOffset: { width: 0, height: 0 },
   },
-  subtitulo: { color: '#eee', fontSize: 14, marginTop: 8, textAlign: 'center' },
+  subtitulo: {
+    color: '#eee',
+    fontFamily: fonts.brand,
+    fontSize: 12,
+    letterSpacing: 1,
+    marginTop: 8,
+    textAlign: 'center',
+    textShadowColor: 'rgba(255,50,35,0.4)',
+    textShadowRadius: 10,
+    textShadowOffset: { width: 0, height: 0 },
+  },
 });

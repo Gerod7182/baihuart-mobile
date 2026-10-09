@@ -16,7 +16,7 @@ import { cartService } from '../../services/cartService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useProductosPorCategoria } from '../../services/productService';
 import { useTranslations } from '../../services/translations';
-import { colors } from '../../theme/colors';
+import { colors, fonts } from '../../theme/colors';
 
 function obtenerFuenteImagen(img?: string) {
   if (!img) return undefined;
@@ -41,6 +41,7 @@ function SeccionProductos({
   return (
     <View style={styles.seccion}>
       <Text style={styles.tituloSeccion}>{titulo}</Text>
+      <View style={styles.lineaTitulo} />
       <FlatList
         data={productos}
         horizontal
@@ -71,7 +72,7 @@ function SeccionProductos({
               >
                 <Text style={styles.textoAgregadoRapido}>+</Text>
               </Pressable>
-              <Text style={styles.nombreProducto} numberOfLines={1}>
+              <Text style={styles.nombreProducto} numberOfLines={2}>
                 {item.nombre}
               </Text>
               <Text style={styles.precio}>${item.precio?.toLocaleString('es-CO')}</Text>
@@ -106,7 +107,7 @@ export default function HomeScreen() {
     setTimeout(() => setToastVisible(false), 1800);
   };
 
-    const confirmarAgregar = async () => {
+  const confirmarAgregar = async () => {
     if (!productoSeleccionado) return;
     const { id, img, precio, nombre } = productoSeleccionado;
     try {
@@ -203,10 +204,17 @@ const styles = StyleSheet.create({
   seccion: { marginTop: 24, paddingHorizontal: 16 },
   tituloSeccion: {
     color: colors.blanco,
+    fontFamily: fonts.brand,
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    letterSpacing: 3,
     textTransform: 'uppercase',
+  },
+  lineaTitulo: {
+    width: 60,
+    height: 3,
+    backgroundColor: colors.rojo,
+    marginTop: 6,
+    marginBottom: 14,
   },
   tarjeta: {
     backgroundColor: colors.negro,
@@ -236,8 +244,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   textoAgregadoRapido: { color: colors.blanco, fontWeight: 'bold', fontSize: 16, lineHeight: 18 },
-  nombreProducto: { color: colors.blanco, marginTop: 8, fontSize: 13 },
-  precio: { color: colors.rojo, marginTop: 4, fontWeight: 'bold' },
+  nombreProducto: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: 8,
+    minHeight: 30,
+  },
+  precio: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 13, marginTop: 4 },
   textoSecundario: { color: '#888', paddingHorizontal: 16 },
 
   fondoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
@@ -249,8 +265,15 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   imagenModal: { width: '100%', height: 220, borderRadius: 12 },
-  nombreModal: { color: colors.blanco, fontSize: 18, fontWeight: 'bold', marginTop: 16 },
-  precioModal: { color: colors.rojo, fontSize: 16, fontWeight: 'bold', marginTop: 4 },
+  nombreModal: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 16,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: 16,
+  },
+  precioModal: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 15, marginTop: 4 },
   selectorCantidad: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -275,5 +298,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
-  textoBotonAgregar: { color: colors.blanco, fontWeight: 'bold', fontSize: 15 },
+  textoBotonAgregar: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
 });

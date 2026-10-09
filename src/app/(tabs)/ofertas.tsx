@@ -7,7 +7,7 @@ import { Oferta } from '../../models/types';
 import { cartService } from '../../services/cartService';
 import { db } from '../../services/firebase';
 import { resolverImagenLocal } from '../../services/imageMap';
-import { colors } from '../../theme/colors';
+import { colors, fonts } from '../../theme/colors';
 
 type OfertaConId = Oferta & { id: string };
 
@@ -34,7 +34,7 @@ function useOfertas() {
 export default function OfertasScreen() {
   const { ofertas, cargando } = useOfertas();
 
-   const agregarAlCarrito = async (oferta: OfertaConId) => {
+  const agregarAlCarrito = async (oferta: OfertaConId) => {
     try {
       await cartService.agregarItem(oferta.id, oferta.img, oferta.precioAhora, oferta.nombre);
     } catch (error) {
@@ -77,7 +77,7 @@ export default function OfertasScreen() {
                     <Text style={styles.textoBadge}>-{descuento}%</Text>
                   </View>
                 )}
-                <Text style={styles.nombreProducto} numberOfLines={1}>
+                <Text style={styles.nombreProducto} numberOfLines={2}>
                   {item.nombre}
                 </Text>
                 <View style={styles.filaPrecios}>
@@ -135,10 +135,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  textoBadge: { color: colors.blanco, fontSize: 11, fontWeight: 'bold' },
-  nombreProducto: { color: colors.blanco, marginTop: 8, fontSize: 13 },
+  textoBadge: { color: colors.blanco, fontFamily: fonts.brand, fontSize: 10 },
+  nombreProducto: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: 8,
+    minHeight: 30,
+  },
   filaPrecios: { flexDirection: 'row', gap: 8, marginTop: 4, alignItems: 'center' },
   precioAntes: { color: '#777', fontSize: 12, textDecorationLine: 'line-through' },
-  precioAhora: { color: colors.rojo, fontWeight: 'bold' },
+  precioAhora: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 13 },
   textoSecundario: { color: '#888', padding: 16 },
 });

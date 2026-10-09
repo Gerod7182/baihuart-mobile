@@ -14,7 +14,7 @@ import { HeroBanner } from '../../components/HeroBanner';
 import { useGaleria } from '../../services/galeriaService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useTranslations } from '../../services/translations';
-import { colors } from '../../theme/colors';
+import { colors, fonts } from '../../theme/colors';
 
 const FILTROS = [
   { key: 'todos', label: 'Todos' },
@@ -83,7 +83,7 @@ export default function GaleriaScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtros}
-        contentContainerStyle={{ paddingLeft: 16, paddingRight: 32, gap: 10 }}
+        contentContainerStyle={{ paddingLeft: 16, paddingRight: 32, gap: 10, alignItems: 'center' }}
       >
         {FILTROS.map((filtro) => (
           <Pressable
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  filtros: { marginTop: 18, marginBottom: 12, flexGrow: 0 },
+  filtros: { marginTop: 18, marginBottom: 12, flexGrow: 0, flexShrink: 0, minHeight: 52 },
   botonFiltro: {
     borderWidth: 1.5,
     borderColor: colors.rojo,
@@ -179,9 +179,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   botonFiltroActivo: { backgroundColor: colors.rojo },
-  textoFiltro: { color: colors.rojo, fontSize: 14, fontWeight: '600' },
-  textoFiltroActivo: { color: colors.blanco, fontWeight: 'bold' },
-  itemGrid: { flex: 1, marginBottom: 12 },
+  textoFiltro: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 13, letterSpacing: 0.5 },
+  textoFiltroActivo: { color: colors.negro },
+  itemGrid: { flex: 1, maxWidth: '48.5%', marginBottom: 12 },
   imagenGrid: { width: '100%', height: 160, borderRadius: 8 },
   imagenFaltante: {
     backgroundColor: '#1a1a1a',
@@ -189,13 +189,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   textoImagenFaltante: { color: '#555', fontSize: 11 },
-  tituloItem: { color: colors.blanco, fontSize: 12, marginTop: 4 },
+  tituloItem: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    marginTop: 4,
+  },
   textoSecundario: { color: '#888', padding: 16 },
   piePagina: {
     padding: 20,
     paddingBottom: 40,
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
-  tituloModal: { color: colors.blanco, fontSize: 16, fontWeight: 'bold' },
+  tituloModal: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 16, letterSpacing: 1 },
   descModal: { color: '#ccc', marginTop: 4, fontSize: 13 },
 });
