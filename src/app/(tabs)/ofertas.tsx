@@ -14,25 +14,35 @@ type OfertaConId = Oferta & { id: string };
 function useOfertas() {
   const [ofertas, setOfertas] = useState<OfertaConId[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [hayError, setHayError] = useState(false);
 
   useEffect(() => {
     const ofertasRef = collection(db, 'ofertas');
-    const unsubscribe = onSnapshot(ofertasRef, (snapshot) => {
-      const datos = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as OfertaConId[];
-      setOfertas(datos);
-      setCargando(false);
-    });
+    const unsubscribe = onSnapshot(
+      ofertasRef,
+      (snapshot) => {
+        const datos = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as OfertaConId[];
+        setOfertas(datos);
+        setHayError(false);
+        setCargando(false);
+      },
+      (error) => {
+        console.error('No se pudieron cargar las ofertas:', error);
+        setHayError(true);
+        setCargando(false);
+      }
+    );
     return () => unsubscribe();
   }, []);
 
-  return { ofertas, cargando };
+  return { ofertas, cargando, hayError };
 }
 
 export default function OfertasScreen() {
-  const { ofertas, cargando } = useOfertas();
+    const { ofertas, cargando, hayError } = useOfertas();
 
   const agregarAlCarrito = async (oferta: OfertaConId) => {
     try {
@@ -91,8 +101,12 @@ export default function OfertasScreen() {
               </Pressable>
             );
           }}
-          ListEmptyComponent={
-            <Text style={styles.textoSecundario}>No hay ofertas activas por ahora.</Text>
+                    ListEmptyComponent={
+            <Text style={styles.textoSecundario}>
+              {hayError
+                ? 'No se pudieron cargar las ofertas. Revisa tu conexión.'
+                : 'No hay ofertas activas por ahora.'}
+            </Text>
           }
         />
       )}
