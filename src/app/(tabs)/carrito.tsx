@@ -44,14 +44,24 @@ export default function CarritoScreen() {
     0
   );
 
-    const eliminarItem = async (id: string) => {
-    await cartService.eliminarItem(id);
-    await cargarCarrito();
+     const eliminarItem = async (id: string) => {
+    try {
+      await cartService.eliminarItem(id);
+      await cargarCarrito();
+    } catch (error) {
+      console.error('No se pudo eliminar el producto del carrito:', error);
+      setMensajeError('No se pudo eliminar el producto. Intenta de nuevo.');
+    }
   };
 
   const cambiarCantidad = async (id: string, cantidadActual: number, delta: number) => {
-    await cartService.actualizarCantidad(id, cantidadActual + delta);
-    await cargarCarrito();
+    try {
+      await cartService.actualizarCantidad(id, cantidadActual + delta);
+      await cargarCarrito();
+    } catch (error) {
+      console.error('No se pudo actualizar la cantidad:', error);
+      setMensajeError('No se pudo actualizar la cantidad. Intenta de nuevo.');
+    }
   };
 
   const finalizarCompra = async () => {

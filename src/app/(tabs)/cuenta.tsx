@@ -1,22 +1,19 @@
-// Equivalente a la parte de autenticación de navbar.component.ts (menú de
-// usuario) + login.component.ts, adaptado a una pantalla completa porque
-// en móvil no hay "menú flotante", es su propia pestaña.
 
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
   ActivityIndicator,
   Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { authService, useUsuarioActual } from '../../services/authService';
-import { usePedidosDeUsuario, pedidoService } from '../../services/pedidoService';
+import { pedidoService, usePedidosDeUsuario } from '../../services/pedidoService';
 import { colors } from '../../theme/colors';
-import { FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
 
 const ADMIN_EMAIL = 'g3rm4n7115@gmail.com';
 
