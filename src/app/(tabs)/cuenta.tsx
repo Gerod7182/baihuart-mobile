@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -11,11 +10,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { ConfirmarModal } from '../../components/ConfirmarModal';
+import { TarjetaPedido } from '../../components/TarjetaPedido';
 import { authService, useUsuarioActual } from '../../services/authService';
 import { pedidoService, usePedidosDeUsuario } from '../../services/pedidoService';
 import { colors } from '../../theme/colors';
-
-const ADMIN_EMAIL = 'g3rm4n7115@gmail.com';
 
 function PantallaLogin() {
   const [modoRegistro, setModoRegistro] = useState(false);
@@ -99,10 +98,36 @@ function PantallaLogin() {
   );
 }
 
+type AccionPedido = { tipo: 'cancelar' | 'eliminar'; id: string } | null;
+
 function PantallaPerfil() {
   const { usuario, esAdmin } = useUsuarioActual();
   const { pedidos, cargando } = usePedidosDeUsuario(usuario?.uid);
   const router = useRouter();
+  const [accion, setAccion] = useState<AccionPedido>(null);
+  const [procesando, setProcesando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState('');
+
+  const esCancelar = accion?.tipo === 'cancelar';
+
+  const confirmarAccion = async () => {
+    if (!accion) return;
+    setProcesando(true);
+    setErrorAccion('');
+    try {
+      if (accion.tipo === 'cancelar') {
+        await pedidoService.cancelarPedido(accion.id);
+      } else {
+        await pedidoService.eliminarPedido(accion.id);
+      }
+    } catch (error) {
+      console.error('No se pudo completar la acción sobre el pedido:', error);
+      setErrorAccion('No se pudo completar la acción. Intenta de nuevo.');
+    } finally {
+      setAccion(null);
+      setProcesando(false);
+    }
+  };
 
   return (
     <View style={styles.contenedor}>
@@ -120,6 +145,7 @@ function PantallaPerfil() {
       </View>
 
       <Text style={styles.subtitulo}>Historial de pedidos</Text>
+      {errorAccion !== '' && <Text style={styles.textoSecundario}>{errorAccion}</Text>}
 
       {cargando ? (
         <Text style={styles.textoSecundario}>Cargando pedidos...</Text>
@@ -129,65 +155,31 @@ function PantallaPerfil() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 16 }}
           renderItem={({ item }) => (
-            <View style={styles.tarjetaPedido}>
-              <View style={styles.filaPedido}>
-                <Text style={styles.fechaPedido}>
-                  {new Date(item.fecha).toLocaleDateString('es-CO')}
-                </Text>
-                <Text style={styles.estadoPedido}>{item.estado}</Text>
-              </View>
-              <Text style={styles.totalPedido}>
-                ${item.total.toLocaleString('es-CO')} · {item.items.length} producto(s)
-              </Text>
-              {item.estado === 'pendiente' && (
-                <Pressable
-                  style={styles.botonCancelarPedido}
-                  onPress={() =>
-                    Alert.alert(
-                      'Cancelar pedido',
-                      'Esto marcará el pedido como cancelado. ¿Continuar?',
-                      [
-                        { text: 'No', style: 'cancel' },
-                        {
-                          text: 'Sí, cancelar',
-                          style: 'destructive',
-                          onPress: () => pedidoService.cancelarPedido(item.id),
-                        },
-                      ]
-                    )
-                  }
-                >
-                  <Text style={styles.textoCancelarPedido}>Cancelar pedido</Text>
-                </Pressable>
-              )}
-              {item.estado === 'cancelado' && (
-                <Pressable
-                  style={styles.botonCancelarPedido}
-                  onPress={() =>
-                    Alert.alert(
-                      'Eliminar del historial',
-                      'Esto borra el pedido por completo, no se puede deshacer. ¿Continuar?',
-                      [
-                        { text: 'No', style: 'cancel' },
-                        {
-                          text: 'Sí, eliminar',
-                          style: 'destructive',
-                          onPress: () => pedidoService.eliminarPedido(item.id),
-                        },
-                      ]
-                    )
-                  }
-                >
-                  <Text style={styles.textoCancelarPedido}>Eliminar del historial</Text>
-                </Pressable>
-              )}
-            </View>
+            <TarjetaPedido
+              pedido={item}
+              onCancelar={() => setAccion({ tipo: 'cancelar', id: item.id })}
+              onEliminar={() => setAccion({ tipo: 'eliminar', id: item.id })}
+            />
           )}
           ListEmptyComponent={
             <Text style={styles.textoSecundario}>Aún no tienes pedidos.</Text>
           }
         />
       )}
+
+      <ConfirmarModal
+        visible={accion !== null}
+        titulo={esCancelar ? 'Cancelar pedido' : 'Eliminar del historial'}
+        mensaje={
+          esCancelar
+            ? 'Esto marcará el pedido como cancelado. ¿Continuar?'
+            : 'Esto borra el pedido por completo, no se puede deshacer. ¿Continuar?'
+        }
+        textoConfirmar={esCancelar ? 'Sí, cancelar' : 'Sí, eliminar'}
+        procesando={procesando}
+        onConfirmar={() => void confirmarAccion()}
+        onCancelar={() => setAccion(null)}
+      />
 
       <Pressable style={styles.botonCerrarSesion} onPress={() => authService.logout()}>
         <Text style={styles.textoBotonCerrarSesion}>Cerrar sesión</Text>
@@ -266,19 +258,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   textoSecundario: { color: '#888', paddingHorizontal: 16 },
-  tarjetaPedido: {
-    borderWidth: 1,
-    borderColor: '#222',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-  },
-  filaPedido: { flexDirection: 'row', justifyContent: 'space-between' },
-  fechaPedido: { color: '#888', fontSize: 12 },
-  estadoPedido: { color: colors.rojo, fontSize: 12, textTransform: 'uppercase' },
-  totalPedido: { color: colors.blanco, marginTop: 6, fontWeight: 'bold' },
-  botonCancelarPedido: { marginTop: 8, alignSelf: 'flex-start' },
-  textoCancelarPedido: { color: '#ff5555', fontSize: 12 },
   botonCerrarSesion: { margin: 16, padding: 14, alignItems: 'center' },
   textoBotonCerrarSesion: { color: '#888', fontSize: 13 },
 });
