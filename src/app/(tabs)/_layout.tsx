@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCantidadCarrito } from '../../services/cartService';
 import { colors } from '../../theme/colors';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -14,6 +15,7 @@ function icono(name: IconName) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const cantidadCarrito = useCantidadCarrito();
 
   return (
     <Tabs
@@ -33,7 +35,15 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Tienda', tabBarIcon: icono('storefront') }} />
       <Tabs.Screen name="galeria" options={{ title: 'Galería', tabBarIcon: icono('images') }} />
       <Tabs.Screen name="ofertas" options={{ title: 'Ofertas', tabBarIcon: icono('pricetag') }} />
-      <Tabs.Screen name="carrito" options={{ title: 'Carrito', tabBarIcon: icono('cart') }} />
+      <Tabs.Screen
+        name="carrito"
+        options={{
+          title: 'Carrito',
+          tabBarIcon: icono('cart'),
+          tabBarBadge: cantidadCarrito > 0 ? cantidadCarrito : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.rojo, color: colors.blanco },
+        }}
+      />
       <Tabs.Screen name="cuenta" options={{ title: 'Cuenta', tabBarIcon: icono('person') }} />
     </Tabs>
   );

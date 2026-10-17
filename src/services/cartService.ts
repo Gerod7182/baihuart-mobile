@@ -4,9 +4,19 @@
 // vista rápida de producto.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import { Product } from '../models/types';
 
 const CLAVE_CARRITO = 'carrito';
+
+// AsyncStorage no avisa cuando algo cambia, así que el servicio lleva su propia
+// lista de "oyentes" (por ejemplo, el contador sobre la pestaña del carrito).
+type Oyente = () => void;
+const oyentes = new Set<Oyente>();
+
+function notificarCambio() {
+  oyentes.forEach((oyente) => oyente());
+}
 
 async function getCarrito(): Promise<Product[]> {
   const data = await AsyncStorage.getItem(CLAVE_CARRITO);
@@ -15,6 +25,7 @@ async function getCarrito(): Promise<Product[]> {
 
 async function setCarrito(carrito: Product[]): Promise<void> {
   await AsyncStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito));
+  notificarCambio();
 }
 
 export const cartService = {
@@ -75,3 +86,33 @@ export const cartService = {
     await setCarrito([]);
   },
 };
+
+/**
+ * Cantidad total de artículos en el carrito, siempre actualizada: se
+ * recalcula sola cada vez que el carrito cambia desde cualquier pantalla.
+ */
+export function useCantidadCarrito() {
+  const [cantidad, setCantidad] = useState(0);
+
+  useEffect(() => {
+    const actualizar = async () => {
+      try {
+        setCantidad(await cartService.contarItems());
+      } catch (error) {
+        console.error('No se pudo contar los artículos del carrito:', error);
+      }
+    };
+
+    const oyente = () => {
+      void actualizar();
+    };
+
+    oyente();
+    oyentes.add(oyente);
+    return () => {
+      oyentes.delete(oyente);
+    };
+  }, []);
+
+  return cantidad;
+}
