@@ -9,8 +9,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import ImageView from 'react-native-image-viewing';
 import { HeroBanner } from '../../components/HeroBanner';
+import { VisorImagenes } from '../../components/VisorImagenes';
 import { useGaleria } from '../../services/galeriaService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useTranslations } from '../../services/translations';
@@ -39,22 +39,27 @@ function PiePagina({ imageIndex }: Readonly<{ imageIndex: number }>) {
   );
 }
 
+// Fuera del componente: no depende de estado y así no se recrea en cada render.
+function obtenerFuenteImagen(rutaImg?: string) {
+  if (!rutaImg) return undefined;
+  return rutaImg.startsWith('http')
+    ? { uri: rutaImg }
+    : resolverImagenLocal(rutaImg);
+}
+
 export default function GaleriaScreen() {
   const { items, cargando } = useGaleria();
   const { textos } = useTranslations();
   const [filtroActivo, setFiltroActivo] = useState<string>('todos');
   const [indiceAbierto, setIndiceAbierto] = useState<number | null>(null);
 
-  const itemsFiltrados = items.filter(
-    (item) => filtroActivo === 'todos' || filtroActivo === item.categoria
+  const itemsFiltrados = useMemo(
+    () =>
+      items.filter(
+        (item) => filtroActivo === 'todos' || filtroActivo === item.categoria
+      ),
+    [items, filtroActivo]
   );
-
-  const obtenerFuenteImagen = (rutaImg?: string) => {
-    if (!rutaImg) return undefined;
-    return rutaImg.startsWith('http')
-      ? { uri: rutaImg }
-      : resolverImagenLocal(rutaImg);
-  };
 
   // react-native-image-viewing necesita un arreglo de { uri } — para las
   // imágenes locales (require()) resolvemos el número de asset con
@@ -144,7 +149,7 @@ export default function GaleriaScreen() {
       )}
 
       <ItemsPieContext.Provider value={itemsFiltrados}>
-        <ImageView
+        <VisorImagenes
           images={imagenesParaVisor}
           imageIndex={indiceAbierto ?? 0}
           visible={indiceAbierto !== null}
