@@ -28,7 +28,7 @@ export const imageMap: Record<string, ImageSourcePropType> = {
   'fenghua.png': require('../../assets/img/fenghua.png'),
   'helmet.png': require('../../assets/img/helmet.png'),
   'jason.png': require('../../assets/img/jason.png'),
-    'luffy.png': require('../../assets/img/luffy.png'),
+  'luffy.png': require('../../assets/img/luffy.png'),
   'nami1.png': require('../../assets/img/nami1.png'),
   'qr-baihu.png': require('../../assets/img/qr-baihu.png'),
   'sabiocrown.png': require('../../assets/img/sabiocrown.png'),
@@ -52,4 +52,3 @@ export function resolverImagenLocal(rutaFirestore?: string): ImageSourcePropType
   const nombreArchivo = rutaFirestore.split('/').pop();
   return nombreArchivo ? imageMap[nombreArchivo] : undefined;
 }
-
