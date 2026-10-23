@@ -60,10 +60,7 @@ export default function GaleriaScreen() {
       ),
     [items, filtroActivo]
   );
-
-  // react-native-image-viewing necesita un arreglo de { uri } — para las
-  // imágenes locales (require()) resolvemos el número de asset con
-  // Image.resolveAssetSource() para sacarle la uri real.
+  
   const imagenesParaVisor = useMemo(
     () =>
       itemsFiltrados.map((item) => {

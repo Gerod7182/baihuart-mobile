@@ -21,8 +21,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        // Las pantallas no manejan la barra de estado por sí solas,
-        // así que el margen superior se aplica aquí una sola vez.
+     
         sceneStyle: { backgroundColor: colors.negro, paddingTop: insets.top },
         tabBarActiveTintColor: colors.rojo,
         tabBarInactiveTintColor: '#8a8a8a',

@@ -28,6 +28,7 @@ export const imageMap: Record<string, ImageSourcePropType> = {
   'fenghua.png': require('../../assets/img/fenghua.png'),
   'helmet.png': require('../../assets/img/helmet.png'),
   'jason.png': require('../../assets/img/jason.png'),
+    'luffy.png': require('../../assets/img/luffy.png'),
   'nami1.png': require('../../assets/img/nami1.png'),
   'qr-baihu.png': require('../../assets/img/qr-baihu.png'),
   'sabiocrown.png': require('../../assets/img/sabiocrown.png'),
@@ -46,13 +47,6 @@ export const imageMap: Record<string, ImageSourcePropType> = {
   'zoro1.png': require('../../assets/img/zoro1.png'),
 };
 
-/**
- * Recibe el valor tal cual viene de Firestore (ej. "assets/img/zoro1.png")
- * y devuelve la imagen local correspondiente, o undefined si no la
- * encuentra en el mapa (por ejemplo, si algún producto nuevo usa una
- * URL real de internet en vez de una ruta local — en ese caso, usa
- * esa URL directo con { uri: ... } en vez de este mapa).
- */
 export function resolverImagenLocal(rutaFirestore?: string): ImageSourcePropType | undefined {
   if (!rutaFirestore) return undefined;
   const nombreArchivo = rutaFirestore.split('/').pop();
