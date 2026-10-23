@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CampoAdmin } from '../components/admin/CampoAdmin';
 import { SelectorChips } from '../components/admin/SelectorChips';
@@ -413,8 +413,7 @@ export default function AdminScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seccion, setSeccion] = useState<Seccion>('productos');
-  const scrollRef = useRef<ScrollView>(null);
-
+  const scrollRef = useRef<ScrollViewInstance>(null);
   // Solo para mostrar el contador en cada pestaña.
   const cantidades: Record<Seccion, number> = {
     productos: useColeccion<Producto>('productos').items.length,

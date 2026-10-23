@@ -66,9 +66,9 @@ export default function GaleriaScreen() {
       itemsFiltrados.map((item) => {
         const fuente = obtenerFuenteImagen(item.img);
         if (!fuente) return { uri: '' };
-        if (typeof fuente === 'number') return Image.resolveAssetSource(fuente);
+        if (typeof fuente === 'number') return Image.resolveAssetSource(fuente) ?? { uri: '' };
         if ('uri' in fuente) return fuente;
-        return Image.resolveAssetSource(fuente);
+        return Image.resolveAssetSource(fuente) ?? { uri: '' };
       }),
     [itemsFiltrados]
   );
