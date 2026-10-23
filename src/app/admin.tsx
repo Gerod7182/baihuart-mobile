@@ -1,285 +1,405 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CampoAdmin } from '../components/admin/CampoAdmin';
+import { SelectorChips } from '../components/admin/SelectorChips';
+import { SelectorImagen } from '../components/admin/SelectorImagen';
+import { TarjetaAdmin } from '../components/admin/TarjetaAdmin';
+import { BotonDegradado } from '../components/BotonDegradado';
+import { useConfirmarEliminar } from '../components/useConfirmarEliminar';
 import { ItemGaleria, Oferta, Producto } from '../models/types';
 import { useUsuarioActual } from '../services/authService';
 import { crudService, useColeccion } from '../services/crudService';
-import { colors } from '../theme/colors';
+import { colors, fonts } from '../theme/colors';
 
 type Seccion = 'productos' | 'galeria' | 'ofertas';
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const SECCIONES: { clave: Seccion; titulo: string; icono: IconName }[] = [
+  { clave: 'productos', titulo: 'Productos', icono: 'shirt-outline' },
+  { clave: 'galeria', titulo: 'Galería', icono: 'images-outline' },
+  { clave: 'ofertas', titulo: 'Ofertas', icono: 'pricetag-outline' },
+];
+
+type PropsFormulario = { onIrArriba: () => void };
 
 // ---------------------------------------------------------------------
-// Formulario de Productos
+// Encabezado de cada formulario: dice si estás creando o editando
 // ---------------------------------------------------------------------
-function FormularioProductos() {
+function BannerFormulario({
+  titulo,
+  editando,
+  onCancelar,
+}: Readonly<{ titulo: string; editando: boolean; onCancelar: () => void }>) {
+  return (
+    <View style={styles.banner}>
+      <Ionicons
+        name={editando ? 'create-outline' : 'add-circle-outline'}
+        size={20}
+        color={colors.rojo}
+      />
+      <Text style={styles.textoBanner} numberOfLines={1}>
+        {titulo}
+      </Text>
+      {editando && (
+        <Pressable onPress={onCancelar} hitSlop={8}>
+          <Text style={styles.cancelar}>Cancelar</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------
+// Productos
+// ---------------------------------------------------------------------
+function FormularioProductos({ onIrArriba }: Readonly<PropsFormulario>) {
   const vacio: Producto = { nombre: '', precio: 0, img: '', codigo: '', categoria: 'camisetas' };
   const [producto, setProducto] = useState<Producto>(vacio);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState('');
+  const [guardando, setGuardando] = useState(false);
   const { items } = useColeccion<Producto>('productos');
+  const { pedirEliminar, modalEliminar } = useConfirmarEliminar(
+    'productos',
+    'No se puede deshacer. ¿Continuar?'
+  );
+
+  const limpiar = () => {
+    setProducto(vacio);
+    setEditandoId(null);
+  };
 
   const guardar = async () => {
     if (!producto.nombre || !producto.codigo || !producto.img) {
       setMensaje('Faltan datos obligatorios (nombre, código e imagen).');
       return;
     }
+    setGuardando(true);
     try {
       await crudService.guardar('productos', producto, editandoId);
       setMensaje(editandoId ? '¡Producto actualizado! ✏️' : '¡Producto guardado! ☁️');
-      setProducto(vacio);
-      setEditandoId(null);
+      limpiar();
     } catch (e) {
       console.error(e);
       setMensaje('No se pudo guardar el producto.');
+    } finally {
+      setGuardando(false);
     }
   };
 
   const editar = (p: Producto & { id: string }) => {
-    setProducto({ nombre: p.nombre, precio: p.precio, img: p.img, codigo: p.codigo, categoria: p.categoria });
+    setProducto({
+      nombre: p.nombre,
+      precio: p.precio,
+      img: p.img,
+      codigo: p.codigo,
+      categoria: p.categoria,
+    });
     setEditandoId(p.id);
     setMensaje('');
+    onIrArriba();
   };
 
   const duplicar = (p: Producto & { id: string }) => {
-    setProducto({ ...p, codigo: p.codigo + '-copia' });
+    setProducto({
+      nombre: p.nombre,
+      precio: p.precio,
+      img: p.img,
+      codigo: p.codigo + '-copia',
+      categoria: p.categoria,
+    });
     setEditandoId(null);
     setMensaje('Cambia el código y guarda para crear la copia.');
-  };
-
-  const eliminar = (id: string) => {
-    Alert.alert('Eliminar producto', 'No se puede deshacer. ¿Continuar?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          await crudService.eliminar('productos', id);
-        },
-      },
-    ]);
+    onIrArriba();
   };
 
   return (
     <View>
-      <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor="#666"
-        value={producto.nombre} onChangeText={(v) => setProducto({ ...producto, nombre: v })} />
-      <TextInput style={styles.input} placeholder="Código" placeholderTextColor="#666"
-        value={producto.codigo} onChangeText={(v) => setProducto({ ...producto, codigo: v })} />
-      <TextInput style={styles.input} placeholder="Precio" placeholderTextColor="#666" keyboardType="numeric"
-        value={producto.precio ? String(producto.precio) : ''}
-        onChangeText={(v) => setProducto({ ...producto, precio: Number(v) || 0 })} />
-      <TextInput style={styles.input} placeholder="URL de la imagen" placeholderTextColor="#666"
-        autoCapitalize="none" value={producto.img} onChangeText={(v) => setProducto({ ...producto, img: v })} />
+      {modalEliminar}
+      <View style={styles.tarjetaFormulario}>
+        <BannerFormulario
+          titulo={editandoId ? `Editando: ${producto.nombre || 'producto'}` : 'Nuevo producto'}
+          editando={editandoId !== null}
+          onCancelar={limpiar}
+        />
 
-      <View style={styles.filaChips}>
-        {(['camisetas', 'stickers', 'posters'] as const).map((cat) => (
-          <Pressable key={cat} onPress={() => setProducto({ ...producto, categoria: cat })}
-            style={[styles.chip, producto.categoria === cat && styles.chipActivo]}>
-            <Text style={[styles.textoChip, producto.categoria === cat && styles.textoChipActivo]}>{cat}</Text>
-          </Pressable>
-        ))}
+        <CampoAdmin
+          etiqueta="Nombre"
+          placeholder="Ej: Póster Optimus Prime"
+          value={producto.nombre}
+          onChangeText={(v) => setProducto({ ...producto, nombre: v })}
+        />
+        <CampoAdmin
+          etiqueta="Código (único)"
+          placeholder="Ej: prod-post-optimus"
+          autoCapitalize="none"
+          value={producto.codigo}
+          onChangeText={(v) => setProducto({ ...producto, codigo: v })}
+        />
+        <CampoAdmin
+          etiqueta="Precio"
+          placeholder="20000"
+          keyboardType="numeric"
+          value={producto.precio ? String(producto.precio) : ''}
+          onChangeText={(v) => setProducto({ ...producto, precio: Number(v) || 0 })}
+        />
+        <SelectorChips
+          etiqueta="Categoría"
+          opciones={['camisetas', 'stickers', 'posters'] as const}
+          valor={producto.categoria}
+          onCambiar={(cat) => setProducto({ ...producto, categoria: cat })}
+        />
+        <SelectorImagen
+          valor={producto.img}
+          onCambiar={(url) => setProducto({ ...producto, img: url })}
+        />
+
+        {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
+
+        <BotonDegradado
+          texto={editandoId ? 'Actualizar producto' : 'Guardar producto'}
+          onPress={() => void guardar()}
+          cargando={guardando}
+        />
       </View>
 
-      {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
-
-      <Pressable style={styles.botonGuardar} onPress={guardar}>
-        <Text style={styles.textoBotonGuardar}>{editandoId ? 'Actualizar' : 'Guardar'}</Text>
-      </Pressable>
-      {editandoId && (
-        <Pressable onPress={() => { setProducto(vacio); setEditandoId(null); }}>
-          <Text style={styles.cancelar}>Cancelar edición</Text>
-        </Pressable>
-      )}
-
-      <Text style={styles.subtitulo}>Productos existentes ({items.length})</Text>
+      <Text style={styles.subtitulo}>Productos guardados ({items.length})</Text>
+      {items.length === 0 && <Text style={styles.vacio}>Aún no hay productos.</Text>}
       {items.map((p) => (
-        <View key={p.id} style={styles.filaItem}>
-          {p.img?.startsWith('http') && <Image source={{ uri: p.img }} style={styles.miniatura} />}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.nombreItem}>{p.nombre}</Text>
-            <Text style={styles.detalleItem}>{p.codigo} · ${p.precio?.toLocaleString('es-CO')}</Text>
-          </View>
-          <Pressable onPress={() => editar(p)}><Text style={styles.accion}>Editar</Text></Pressable>
-          <Pressable onPress={() => duplicar(p)}><Text style={styles.accion}>Duplicar</Text></Pressable>
-          <Pressable onPress={() => eliminar(p.id)}><Text style={styles.accionEliminar}>Eliminar</Text></Pressable>
-        </View>
+        <TarjetaAdmin
+          key={p.id}
+          ruta={p.img}
+          titulo={p.nombre}
+          subtitulo={`${p.codigo} · $${p.precio?.toLocaleString('es-CO')}`}
+          etiqueta={p.categoria}
+          resaltada={p.id === editandoId}
+          onEditar={() => editar(p)}
+          onDuplicar={() => duplicar(p)}
+          onEliminar={() => pedirEliminar(p.id)}
+        />
       ))}
     </View>
   );
 }
 
 // ---------------------------------------------------------------------
-// Formulario de Galería
+// Galería
 // ---------------------------------------------------------------------
-function FormularioGaleria() {
+function FormularioGaleria({ onIrArriba }: Readonly<PropsFormulario>) {
   const vacio: ItemGaleria = { img: '', categoria: 'espiritual', titulo: '', descripcion: '' };
   const [item, setItem] = useState<ItemGaleria>(vacio);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState('');
+  const [guardando, setGuardando] = useState(false);
   const { items } = useColeccion<ItemGaleria>('galeria');
+  const { pedirEliminar, modalEliminar } = useConfirmarEliminar(
+    'galeria',
+    '¿Seguro que quieres quitar esta imagen de la galería?'
+  );
+
+  const limpiar = () => {
+    setItem(vacio);
+    setEditandoId(null);
+  };
 
   const guardar = async () => {
     if (!item.titulo || !item.img) {
       setMensaje('Faltan datos obligatorios (título e imagen).');
       return;
     }
+    setGuardando(true);
     try {
       await crudService.guardar('galeria', item, editandoId);
       setMensaje(editandoId ? '¡Actualizado! ✏️' : '¡Agregado a la galería! 🖼️');
-      setItem(vacio);
-      setEditandoId(null);
+      limpiar();
     } catch (e) {
       console.error(e);
       setMensaje('No se pudo guardar.');
+    } finally {
+      setGuardando(false);
     }
   };
 
   const editar = (g: ItemGaleria & { id: string }) => {
-    setItem({ img: g.img, categoria: g.categoria, titulo: g.titulo, descripcion: g.descripcion });
+    setItem({
+      img: g.img,
+      categoria: g.categoria,
+      titulo: g.titulo,
+      descripcion: g.descripcion,
+    });
     setEditandoId(g.id);
     setMensaje('');
-  };
-
-  const eliminar = (id: string) => {
-    Alert.alert('Quitar imagen', '¿Seguro que quieres quitar esta imagen de la galería?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => crudService.eliminar('galeria', id) },
-    ]);
+    onIrArriba();
   };
 
   return (
     <View>
-      <TextInput style={styles.input} placeholder="Título" placeholderTextColor="#666"
-        value={item.titulo} onChangeText={(v) => setItem({ ...item, titulo: v })} />
-      <TextInput style={styles.input} placeholder="Descripción" placeholderTextColor="#666" multiline
-        value={item.descripcion} onChangeText={(v) => setItem({ ...item, descripcion: v })} />
-      <TextInput style={styles.input} placeholder="URL de la imagen" placeholderTextColor="#666"
-        autoCapitalize="none" value={item.img} onChangeText={(v) => setItem({ ...item, img: v })} />
+      {modalEliminar}
+      <View style={styles.tarjetaFormulario}>
+        <BannerFormulario
+          titulo={editandoId ? `Editando: ${item.titulo || 'imagen'}` : 'Nueva imagen de galería'}
+          editando={editandoId !== null}
+          onCancelar={limpiar}
+        />
 
-      <View style={styles.filaChips}>
-        {(['espiritual', 'anime', 'pop'] as const).map((cat) => (
-          <Pressable key={cat} onPress={() => setItem({ ...item, categoria: cat })}
-            style={[styles.chip, item.categoria === cat && styles.chipActivo]}>
-            <Text style={[styles.textoChip, item.categoria === cat && styles.textoChipActivo]}>{cat}</Text>
-          </Pressable>
-        ))}
+        <CampoAdmin
+          etiqueta="Título"
+          placeholder="Ej: Optimus Prime"
+          value={item.titulo}
+          onChangeText={(v) => setItem({ ...item, titulo: v })}
+        />
+        <CampoAdmin
+          etiqueta="Descripción"
+          placeholder="Breve descripción del diseño"
+          multiline
+          style={styles.campoLargo}
+          value={item.descripcion}
+          onChangeText={(v) => setItem({ ...item, descripcion: v })}
+        />
+        <SelectorChips
+          etiqueta="Categoría"
+          opciones={['espiritual', 'anime', 'pop'] as const}
+          valor={item.categoria}
+          onCambiar={(cat) => setItem({ ...item, categoria: cat })}
+        />
+        <SelectorImagen valor={item.img} onCambiar={(url) => setItem({ ...item, img: url })} />
+
+        {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
+
+        <BotonDegradado
+          texto={editandoId ? 'Actualizar imagen' : 'Guardar imagen'}
+          onPress={() => void guardar()}
+          cargando={guardando}
+        />
       </View>
 
-      {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
-
-      <Pressable style={styles.botonGuardar} onPress={guardar}>
-        <Text style={styles.textoBotonGuardar}>{editandoId ? 'Actualizar' : 'Guardar'}</Text>
-      </Pressable>
-      {editandoId && (
-        <Pressable onPress={() => { setItem(vacio); setEditandoId(null); }}>
-          <Text style={styles.cancelar}>Cancelar edición</Text>
-        </Pressable>
-      )}
-
-      <Text style={styles.subtitulo}>Items existentes ({items.length})</Text>
+      <Text style={styles.subtitulo}>Imágenes de la galería ({items.length})</Text>
+      {items.length === 0 && <Text style={styles.vacio}>Aún no hay imágenes.</Text>}
       {items.map((g) => (
-        <View key={g.id} style={styles.filaItem}>
-          {g.img?.startsWith('http') && <Image source={{ uri: g.img }} style={styles.miniatura} />}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.nombreItem}>{g.titulo}</Text>
-            <Text style={styles.detalleItem}>{g.categoria}</Text>
-          </View>
-          <Pressable onPress={() => editar(g)}><Text style={styles.accion}>Editar</Text></Pressable>
-          <Pressable onPress={() => eliminar(g.id)}><Text style={styles.accionEliminar}>Eliminar</Text></Pressable>
-        </View>
+        <TarjetaAdmin
+          key={g.id}
+          ruta={g.img}
+          titulo={g.titulo}
+          subtitulo={g.descripcion}
+          etiqueta={g.categoria}
+          resaltada={g.id === editandoId}
+          onEditar={() => editar(g)}
+          onEliminar={() => pedirEliminar(g.id)}
+        />
       ))}
     </View>
   );
 }
 
 // ---------------------------------------------------------------------
-// Formulario de Ofertas
+// Ofertas
 // ---------------------------------------------------------------------
-function FormularioOfertas() {
+function FormularioOfertas({ onIrArriba }: Readonly<PropsFormulario>) {
   const vacio: Oferta = { nombre: '', img: '', precioAntes: 0, precioAhora: 0 };
   const [oferta, setOferta] = useState<Oferta>(vacio);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState('');
+  const [guardando, setGuardando] = useState(false);
   const { items } = useColeccion<Oferta>('ofertas');
+  const { pedirEliminar, modalEliminar } = useConfirmarEliminar(
+    'ofertas',
+    '¿Seguro que quieres quitar esta oferta?'
+  );
+
+  const limpiar = () => {
+    setOferta(vacio);
+    setEditandoId(null);
+  };
 
   const guardar = async () => {
     if (!oferta.nombre || !oferta.img) {
       setMensaje('Faltan datos obligatorios (nombre e imagen).');
       return;
     }
+    setGuardando(true);
     try {
       await crudService.guardar('ofertas', oferta, editandoId);
       setMensaje(editandoId ? '¡Oferta actualizada! ✏️' : '¡Oferta publicada! 🔥');
-      setOferta(vacio);
-      setEditandoId(null);
+      limpiar();
     } catch (e) {
       console.error(e);
       setMensaje('No se pudo guardar la oferta.');
+    } finally {
+      setGuardando(false);
     }
   };
 
   const editar = (o: Oferta & { id: string }) => {
-    setOferta({ nombre: o.nombre, img: o.img, precioAntes: o.precioAntes, precioAhora: o.precioAhora });
+    setOferta({
+      nombre: o.nombre,
+      img: o.img,
+      precioAntes: o.precioAntes,
+      precioAhora: o.precioAhora,
+    });
     setEditandoId(o.id);
     setMensaje('');
-  };
-
-  const eliminar = (id: string) => {
-    Alert.alert('Quitar oferta', '¿Seguro que quieres quitar esta oferta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => crudService.eliminar('ofertas', id) },
-    ]);
+    onIrArriba();
   };
 
   return (
     <View>
-      <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor="#666"
-        value={oferta.nombre} onChangeText={(v) => setOferta({ ...oferta, nombre: v })} />
-      <TextInput style={styles.input} placeholder="URL de la imagen" placeholderTextColor="#666"
-        autoCapitalize="none" value={oferta.img} onChangeText={(v) => setOferta({ ...oferta, img: v })} />
-      <TextInput style={styles.input} placeholder="Precio antes" placeholderTextColor="#666" keyboardType="numeric"
-        value={oferta.precioAntes ? String(oferta.precioAntes) : ''}
-        onChangeText={(v) => setOferta({ ...oferta, precioAntes: Number(v) || 0 })} />
-      <TextInput style={styles.input} placeholder="Precio ahora" placeholderTextColor="#666" keyboardType="numeric"
-        value={oferta.precioAhora ? String(oferta.precioAhora) : ''}
-        onChangeText={(v) => setOferta({ ...oferta, precioAhora: Number(v) || 0 })} />
+      {modalEliminar}
+      <View style={styles.tarjetaFormulario}>
+        <BannerFormulario
+          titulo={editandoId ? `Editando: ${oferta.nombre || 'oferta'}` : 'Nueva oferta'}
+          editando={editandoId !== null}
+          onCancelar={limpiar}
+        />
 
-      {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
+        <CampoAdmin
+          etiqueta="Nombre"
+          placeholder="Ej: Pack: Camiseta + Sticker"
+          value={oferta.nombre}
+          onChangeText={(v) => setOferta({ ...oferta, nombre: v })}
+        />
+        <CampoAdmin
+          etiqueta="Precio antes"
+          placeholder="40000"
+          keyboardType="numeric"
+          value={oferta.precioAntes ? String(oferta.precioAntes) : ''}
+          onChangeText={(v) => setOferta({ ...oferta, precioAntes: Number(v) || 0 })}
+        />
+        <CampoAdmin
+          etiqueta="Precio ahora"
+          placeholder="25000"
+          keyboardType="numeric"
+          value={oferta.precioAhora ? String(oferta.precioAhora) : ''}
+          onChangeText={(v) => setOferta({ ...oferta, precioAhora: Number(v) || 0 })}
+        />
+        <SelectorImagen
+          valor={oferta.img}
+          onCambiar={(url) => setOferta({ ...oferta, img: url })}
+        />
 
-      <Pressable style={styles.botonGuardar} onPress={guardar}>
-        <Text style={styles.textoBotonGuardar}>{editandoId ? 'Actualizar' : 'Guardar'}</Text>
-      </Pressable>
-      {editandoId && (
-        <Pressable onPress={() => { setOferta(vacio); setEditandoId(null); }}>
-          <Text style={styles.cancelar}>Cancelar edición</Text>
-        </Pressable>
-      )}
+        {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
 
-      <Text style={styles.subtitulo}>Ofertas existentes ({items.length})</Text>
+        <BotonDegradado
+          texto={editandoId ? 'Actualizar oferta' : 'Publicar oferta'}
+          onPress={() => void guardar()}
+          cargando={guardando}
+        />
+      </View>
+
+      <Text style={styles.subtitulo}>Ofertas activas ({items.length})</Text>
+      {items.length === 0 && <Text style={styles.vacio}>Aún no hay ofertas.</Text>}
       {items.map((o) => (
-        <View key={o.id} style={styles.filaItem}>
-          {o.img?.startsWith('http') && <Image source={{ uri: o.img }} style={styles.miniatura} />}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.nombreItem}>{o.nombre}</Text>
-            <Text style={styles.detalleItem}>
-              ${o.precioAntes?.toLocaleString('es-CO')} → ${o.precioAhora?.toLocaleString('es-CO')}
-            </Text>
-          </View>
-          <Pressable onPress={() => editar(o)}><Text style={styles.accion}>Editar</Text></Pressable>
-          <Pressable onPress={() => eliminar(o.id)}><Text style={styles.accionEliminar}>Eliminar</Text></Pressable>
-        </View>
+        <TarjetaAdmin
+          key={o.id}
+          ruta={o.img}
+          titulo={o.nombre}
+          subtitulo={`$${o.precioAntes?.toLocaleString('es-CO')} → $${o.precioAhora?.toLocaleString('es-CO')}`}
+          resaltada={o.id === editandoId}
+          onEditar={() => editar(o)}
+          onEliminar={() => pedirEliminar(o.id)}
+        />
       ))}
     </View>
   );
@@ -293,6 +413,16 @@ export default function AdminScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seccion, setSeccion] = useState<Seccion>('productos');
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Solo para mostrar el contador en cada pestaña.
+  const cantidades: Record<Seccion, number> = {
+    productos: useColeccion<Producto>('productos').items.length,
+    galeria: useColeccion<ItemGaleria>('galeria').items.length,
+    ofertas: useColeccion<Oferta>('ofertas').items.length,
+  };
+
+  const irArriba = () => scrollRef.current?.scrollTo({ y: 0, animated: true });
 
   // Equivalente al AdminGuard: exige correo admin Y correo verificado.
   const tieneAcceso = usuario && esAdmin && usuario.emailVerified;
@@ -313,10 +443,7 @@ export default function AdminScreen() {
 
   return (
     <View style={styles.contenedor}>
-      {/* El header nativo de expo-router a veces queda oculto por el
-          layout raíz, así que armamos uno propio que SIEMPRE respeta
-          el área segura (evita que la barra de estado del celular
-          tape los botones, que era el bug original). */}
+      {/* Encabezado propio que respeta el área segura del celular. */}
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.encabezado, { paddingTop: insets.top + 12 }]}>
         <Pressable onPress={() => router.back()} hitSlop={10}>
@@ -326,19 +453,30 @@ export default function AdminScreen() {
         <View style={{ width: 22 }} />
       </View>
 
-      <View style={styles.filaChips}>
-        {(['productos', 'galeria', 'ofertas'] as const).map((s) => (
-          <Pressable key={s} onPress={() => setSeccion(s)}
-            style={[styles.chipSeccion, seccion === s && styles.chipActivo]}>
-            <Text style={[styles.textoChip, seccion === s && styles.textoChipActivo]}>{s}</Text>
-          </Pressable>
-        ))}
+      <View style={styles.tabs}>
+        {SECCIONES.map((s) => {
+          const activa = seccion === s.clave;
+          return (
+            <Pressable
+              key={s.clave}
+              onPress={() => setSeccion(s.clave)}
+              style={[styles.tab, activa && styles.tabActiva]}
+            >
+              <Ionicons name={s.icono} size={20} color={activa ? colors.blanco : colors.rojo} />
+              <Text style={[styles.textoTab, activa && styles.textoTabActivo]}>
+                {s.titulo} ({cantidades[s.clave]})
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {seccion === 'productos' && <FormularioProductos />}
-        {seccion === 'galeria' && <FormularioGaleria />}
-        {seccion === 'ofertas' && <FormularioOfertas />}
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContenido}>
+        <View style={styles.columna}>
+          {seccion === 'productos' && <FormularioProductos onIrArriba={irArriba} />}
+          {seccion === 'galeria' && <FormularioGaleria onIrArriba={irArriba} />}
+          {seccion === 'ofertas' && <FormularioOfertas onIrArriba={irArriba} />}
+        </View>
       </ScrollView>
     </View>
   );
@@ -357,27 +495,55 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
-  tituloEncabezado: { color: colors.blanco, fontSize: 17, fontWeight: 'bold' },
-  volver: { color: colors.rojo, fontSize: 14 },
-  input: {
-    borderWidth: 1, borderColor: '#333', borderRadius: 8, color: colors.blanco,
-    padding: 12, marginBottom: 10,
+  tituloEncabezado: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 16,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  filaChips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, marginBottom: 10, flexWrap: 'wrap' },
-  chip: { borderWidth: 1, borderColor: colors.rojo, borderRadius: 16, paddingVertical: 6, paddingHorizontal: 12 },
-  chipSeccion: { borderWidth: 1, borderColor: colors.rojo, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14 },
-  chipActivo: { backgroundColor: colors.rojo },
-  textoChip: { color: colors.rojo, fontSize: 12, textTransform: 'capitalize' },
-  textoChipActivo: { color: colors.blanco, fontWeight: 'bold' },
-  mensaje: { color: colors.amarillo ?? '#ffd000', fontSize: 12, marginBottom: 8 },
-  botonGuardar: { backgroundColor: colors.rojo, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
-  textoBotonGuardar: { color: colors.blanco, fontWeight: 'bold' },
-  cancelar: { color: '#888', textAlign: 'center', marginTop: 8, fontSize: 12 },
-  subtitulo: { color: colors.blanco, fontWeight: 'bold', fontSize: 14, marginTop: 24, marginBottom: 10, textTransform: 'uppercase' },
-  filaItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#1a1a1a', paddingBottom: 10 },
-  miniatura: { width: 40, height: 40, borderRadius: 6 },
-  nombreItem: { color: colors.blanco, fontSize: 13 },
-  detalleItem: { color: '#888', fontSize: 11 },
-  accion: { color: colors.rojo, fontSize: 11, marginLeft: 6 },
-  accionEliminar: { color: '#ff5555', fontSize: 11, marginLeft: 6 },
+  volver: { color: colors.rojo, fontSize: 14 },
+  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#3a1010',
+    borderRadius: 12,
+    paddingVertical: 10,
+  },
+  tabActiva: { backgroundColor: colors.rojo, borderColor: colors.rojo },
+  textoTab: { color: '#cccccc', fontSize: 11 },
+  textoTabActivo: { color: colors.blanco, fontWeight: 'bold' },
+  scrollContenido: { padding: 16, paddingBottom: 48, alignItems: 'center' },
+  columna: { width: '100%', maxWidth: 720 },
+  tarjetaFormulario: {
+    backgroundColor: colors.gris,
+    borderWidth: 1,
+    borderColor: '#2a0a0a',
+    borderRadius: 16,
+    padding: 16,
+  },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  textoBanner: {
+    flex: 1,
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  cancelar: { color: '#aaaaaa', fontSize: 12 },
+  campoLargo: { minHeight: 80, textAlignVertical: 'top' },
+  mensaje: { color: colors.amarillo, fontSize: 12, marginBottom: 12 },
+  subtitulo: {
+    color: colors.blanco,
+    fontFamily: fonts.brand,
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: 28,
+    marginBottom: 12,
+  },
+  vacio: { color: '#777777', textAlign: 'center', padding: 20 },
 });
