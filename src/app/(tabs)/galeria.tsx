@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { HeroBanner } from '../../components/HeroBanner';
@@ -15,6 +16,7 @@ import { useGaleria } from '../../services/galeriaService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useTranslations } from '../../services/translations';
 import { colors, fonts } from '../../theme/colors';
+import { anchoCelda, calcularColumnas, contenidoCentrado } from '../../theme/responsive';
 
 const FILTROS = [
   { key: 'todos', label: 'Todos' },
@@ -50,6 +52,8 @@ function obtenerFuenteImagen(rutaImg?: string) {
 export default function GaleriaScreen() {
   const { items, cargando } = useGaleria();
   const { textos } = useTranslations();
+    const { width } = useWindowDimensions();
+  const columnas = calcularColumnas(width);
   const [filtroActivo, setFiltroActivo] = useState<string>('todos');
   const [indiceAbierto, setIndiceAbierto] = useState<number | null>(null);
 
@@ -114,18 +118,23 @@ export default function GaleriaScreen() {
         <FlatList
           data={itemsFiltrados}
           keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={{ padding: 12 }}
-          columnWrapperStyle={{ gap: 12 }}
+                    key={columnas}
+          numColumns={columnas}
+          contentContainerStyle={[styles.lista, contenidoCentrado]}
+
           renderItem={({ item, index }) => {
             const fuente = obtenerFuenteImagen(item.img);
             return (
               <Pressable
-                style={styles.itemGrid}
+              style={[styles.itemGrid, { maxWidth: anchoCelda(columnas) }]}
                 onPress={() => setIndiceAbierto(index)}
               >
                 {fuente ? (
-                  <Image source={fuente} style={styles.imagenGrid} resizeMode="cover" />
+                  <Image
+                  source={fuente}
+                  style={[styles.imagenGrid, { aspectRatio: columnas > 2 ? 4 / 5 : 1 }]}
+                  resizeMode="cover"
+                />
                 ) : (
                   <View style={[styles.imagenGrid, styles.imagenFaltante]}>
                     <Text style={styles.textoImagenFaltante}>Sin imagen</Text>
@@ -183,8 +192,9 @@ const styles = StyleSheet.create({
   botonFiltroActivo: { backgroundColor: colors.rojo },
   textoFiltro: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 13, letterSpacing: 0.5 },
   textoFiltroActivo: { color: colors.negro },
-  itemGrid: { flex: 1, maxWidth: '48.5%', marginBottom: 12 },
-  imagenGrid: { width: '100%', height: 160, borderRadius: 8 },
+    lista: { padding: 6 },
+  itemGrid: { flex: 1, padding: 6 },
+  imagenGrid: { width: '100%', borderRadius: 8 },
   imagenFaltante: {
     backgroundColor: '#1a1a1a',
     alignItems: 'center',

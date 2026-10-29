@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 28,
   },
-  boton: { alignSelf: 'stretch', maxWidth: 360, width: '100%' },
+  boton: { alignSelf: 'center', maxWidth: 360, width: '100%' },
 });
