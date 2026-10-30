@@ -1,56 +1,64 @@
-# Welcome to your Expo app 👋
+# Baihuart
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil de la tienda de merchandising de cómics, anime y videojuegos **Baihuart**. Permite explorar el catálogo, ver la galería de diseños, comprar con un carrito y seguir los pedidos; un administrador gestiona productos, galería y ofertas desde la misma aplicación. Está en español, inglés y portugués.
 
-## Get started
+Proyecto académico de Calidad de Software (ISD33, grupo 30111) de Ingeniería de Sistemas, CUN.
 
-1. Install dependencies
+**Equipo:** German Alejandro Rodríguez Bermudez, Juan David Martinez Cubillos y Fabian Steven Castillo Murillo.
 
-   ```bash
-   npm install
-   ```
+## Descargar la aplicación (Android)
 
-2. Start the app
+APK de la versión 1.0.0: https://expo.dev/artifacts/eas/qUVJllyM0lZjxDKwbBNMsxPvddQ0kw7iIHPrG5loXg8.apk
 
-   ```bash
-   npx expo start
-   ```
+1. Abre el enlace desde un celular Android y descarga el archivo.
+2. Si Android lo pide, permite instalar aplicaciones de esta fuente.
+3. Abre el archivo y pulsa Instalar.
+4. Abre Baihuart. La primera vez necesita internet.
 
-In the output, you'll find options to open the app in a
+## Tecnologías
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Expo SDK 58, React Native 0.88, React 19 y Expo Router
+- TypeScript en modo estricto
+- Firebase (Authentication y Cloud Firestore), proyecto `baihuart-store`, compartido con el sitio web en Angular
+- Cloudinary para las fotos que sube el administrador
+- EAS Build para generar el APK
+- SonarQube Cloud para el análisis de calidad
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Ejecutar en desarrollo
 
-## Get a fresh project
-
-When you're ready, run:
+Requisitos: Node.js y la aplicación Expo Go en el celular.
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Escanea el código QR con Expo Go. Para comprobar los tipos:
 
-### Other setup steps
+```bash
+npx tsc --noEmit
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Estructura
 
-## Learn more
+| Carpeta | Contenido |
+| --- | --- |
+| `src/app` | Pantallas: Tienda, Galería, Ofertas, Carrito, Cuenta y panel de administración |
+| `src/components` | Componentes reutilizables |
+| `src/services` | Firebase, carrito, pedidos, galería, traducciones y Cloudinary |
+| `src/theme` | Colores, tipografía y medidas responsivas |
+| `src/models` y `src/types` | Modelos de datos y declaraciones de tipos |
 
-To learn more about developing your project with Expo, look at the following resources:
+## Compilar el APK
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx eas-cli build --platform android --profile preview
+```
 
-## Join the community
+## Calidad
 
-Join our community of developers creating universal apps.
+El código se analiza con SonarQube Cloud en cada cambio de la rama `master`. Resultado de la versión 1.0.0: 0 problemas abiertos en seguridad, fiabilidad y mantenibilidad (las tres con calificación A) y 0,0 % de código duplicado. Las pruebas funcionales y las métricas están en el informe técnico de la entrega.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Licencia
+
+Consulta el archivo `LICENSE`.
