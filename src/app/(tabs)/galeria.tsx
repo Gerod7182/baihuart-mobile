@@ -16,7 +16,7 @@ import { useGaleria } from '../../services/galeriaService';
 import { resolverImagenLocal } from '../../services/imageMap';
 import { useTranslations } from '../../services/translations';
 import { colors, fonts } from '../../theme/colors';
-import { anchoCelda, calcularColumnas, contenidoCentrado } from '../../theme/responsive';
+import { ANCHO_MAXIMO, calcularColumnas, contenidoCentrado } from '../../theme/responsive';
 
 const FILTROS = [
   { key: 'todos', label: 'Todos' },
@@ -52,8 +52,11 @@ function obtenerFuenteImagen(rutaImg?: string) {
 export default function GaleriaScreen() {
   const { items, cargando } = useGaleria();
   const { textos } = useTranslations();
-    const { width } = useWindowDimensions();
-  const columnas = calcularColumnas(width);
+  const { width } = useWindowDimensions();
+  const columnas = Math.max(calcularColumnas(width), 3);
+  // Lado exacto (en px) de cada imagen: 12 = relleno de la lista, 8 = relleno de cada celda.
+  const anchoLista = Math.min(width, ANCHO_MAXIMO) - 12;
+  const lado = Math.floor(anchoLista / columnas) - 8;
   const [filtroActivo, setFiltroActivo] = useState<string>('todos');
   const [indiceAbierto, setIndiceAbierto] = useState<number | null>(null);
 
@@ -64,7 +67,7 @@ export default function GaleriaScreen() {
       ),
     [items, filtroActivo]
   );
-  
+
   const imagenesParaVisor = useMemo(
     () =>
       itemsFiltrados.map((item) => {
@@ -82,7 +85,7 @@ export default function GaleriaScreen() {
       <HeroBanner
         nombreImagen="samurai.png"
         titulo={textos?.['galeria-titulo'] ?? 'Galería de Diseños'}
-        altura={180}
+        altura={130}
       />
 
       <ScrollView
@@ -118,29 +121,27 @@ export default function GaleriaScreen() {
         <FlatList
           data={itemsFiltrados}
           keyExtractor={(item) => item.id}
-                    key={columnas}
+          key={columnas}
           numColumns={columnas}
           contentContainerStyle={[styles.lista, contenidoCentrado]}
-
           renderItem={({ item, index }) => {
             const fuente = obtenerFuenteImagen(item.img);
             return (
-              <Pressable
-              style={[styles.itemGrid, { maxWidth: anchoCelda(columnas) }]}
-                onPress={() => setIndiceAbierto(index)}
-              >
+              <Pressable style={styles.itemGrid} onPress={() => setIndiceAbierto(index)}>
                 {fuente ? (
                   <Image
-                  source={fuente}
-                  style={[styles.imagenGrid, { aspectRatio: columnas > 2 ? 4 / 5 : 1 }]}
-                  resizeMode="cover"
-                />
+                    source={fuente}
+                    style={[styles.imagenGrid, { width: lado, height: lado }]}
+                    resizeMode="cover"
+                  />
                 ) : (
-                  <View style={[styles.imagenGrid, styles.imagenFaltante]}>
+                  <View
+                    style={[styles.imagenGrid, styles.imagenFaltante, { width: lado, height: lado }]}
+                  >
                     <Text style={styles.textoImagenFaltante}>Sin imagen</Text>
                   </View>
                 )}
-                <Text style={styles.tituloItem} numberOfLines={1}>
+                <Text style={[styles.tituloItem, { width: lado }]} numberOfLines={1}>
                   {item.titulo ?? ''}
                 </Text>
               </Pressable>
@@ -192,9 +193,9 @@ const styles = StyleSheet.create({
   botonFiltroActivo: { backgroundColor: colors.rojo },
   textoFiltro: { color: colors.rojo, fontFamily: fonts.brand, fontSize: 13, letterSpacing: 0.5 },
   textoFiltroActivo: { color: colors.negro },
-    lista: { padding: 6 },
-  itemGrid: { flex: 1, padding: 6 },
-  imagenGrid: { width: '100%', borderRadius: 8 },
+  lista: { padding: 6 },
+  itemGrid: { padding: 4 },
+  imagenGrid: { borderRadius: 8 },
   imagenFaltante: {
     backgroundColor: '#1a1a1a',
     alignItems: 'center',
